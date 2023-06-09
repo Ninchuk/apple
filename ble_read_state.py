@@ -167,14 +167,11 @@ class MainForm(npyscreen.FormBaseNew):
         if args.airdrop:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20, max_height=y // 2)
             self.OutputBox = self.add(OutputBox, editable=False)
-            self.gd.select_whole_line = True
         elif args.verb:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20, max_height=y // 2)
             self.VerbOutputBox = self.add(VerbOutputBox, editable=False, name=logFile)
-            self.gd.select_whole_line = True
         else:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20)
-            self.gd.select_whole_line = True
         self.gd.values = []
         self.gd.add_handlers({curses.ascii.NL: self.upd_cell})
 
