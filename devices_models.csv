@@ -25,6 +25,8 @@ x86_64,iPhone Simulator
 "iPhone9,4",iPhone 7 Plus
 "iPhone10,1",iPhone 8
 "iPhone10,2",iPhone 8 Plus
+"iPhone14,4",iphone 13 mini
+"iPhone13,4",iphone 12 PRO MAX
 "iPhone10,3",iPhone X Global
 "iPhone10,4",iPhone 8
 "iPhone10,5",iPhone 8 Plus
@@ -62,6 +64,7 @@ x86_64,iPhone Simulator
 "MacBookPro5,5","MacBook Pro 13, mid 2009"
 "MacBookPro5,1","MacBook Pro 15, end 2008"
 "MacBookPro4,1","MacBook Pro 15, ear 2008"
+"Mac14,2",fruitbook air
 "iPod1,1",1st Gen iPod
 "iPod2,1",2nd Gen iPod
 "iPod3,1",3rd Gen iPod
@@ -130,3 +133,4 @@ x86_64,iPhone Simulator
 "Watch4,2",Apple Watch Series 4 44mm case (GPS)
 "Watch4,3",Apple Watch Series 4 40mm case (GPS+Cellular)
 "Watch4,4",Apple Watch Series 4 44mm case (GPS+Cellular)
+"Watch6,8",stu watch model

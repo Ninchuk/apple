@@ -21,6 +21,7 @@ and sometimes directly from the Bluez sources.
 """
 
 from __future__ import absolute_import
+import os
 import sys
 import struct
 import fcntl
@@ -346,8 +347,9 @@ def parse_le_advertising_events(sock, mac_addr=None, packet_length=None,
                 try:
                     handler(mac_addr_str, adv_type, data, rssi)
                 except Exception as e:
-                    print('Exception when calling handler with a BLE advertising event: %r' % (e,))
-
+                    pass
+                    #f =  open('/dev/nulli', 'w')
+                    #sys.stdout = f
     except KeyboardInterrupt:
         print("\nRestore previous socket filter")
         sock.setsockopt(bluez.SOL_HCI, bluez.HCI_FILTER, old_filter)
