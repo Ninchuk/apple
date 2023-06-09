@@ -1,0 +1,26 @@
+00,Case:Closed
+01,Case:All out
+02,L:out
+03,L:out
+05,R:out
+09,R:out
+0b,LR:in
+11,R:out
+13,R:in
+15,R:in case
+20,L:out
+21,Case:All out
+22,Case:L out
+23,R:out
+29,L:out
+2b,LR:in
+31,Case:L out
+33,Case:L out
+50,Case:open
+51,L:out
+53,L:in
+55,Case:open
+70,Case:open
+71,Case:R out
+73,Case:R out
+75,Case:open

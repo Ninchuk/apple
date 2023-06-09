@@ -1,0 +1,27 @@
+0000,Unknown
+0100,Other
+0200,Bridge
+0300,Fan
+0400,Garage Door Opener
+0500,Lightbulb
+0600,Door Lock
+0700,Outlet
+0800,Switch
+0900,Thermostat
+0a00,Sensor
+0b00,Security System
+0c00,Door
+0d00,Window
+0e00,Window Covering
+0f00,Programmable Switch
+1000,Range Extender
+1100,IP Camera
+1200,Video Doorbell
+1300,Air Purifier
+1400,Heater
+1500,Air Conditioner
+1600,Humidifier
+1700,Dehumidifier
+1c00,Sprinklers
+1d00,Faucets
+1e00,Shower Systems
