@@ -116,6 +116,7 @@ if args.message:
 class App(npyscreen.StandardApp):
     def onStart(self):
         self.addForm("MAIN", MainForm, name="Apple devices scanner")
+        self.addForm("COMMAND", CommandForm, name="Command Selection")
 
 
 class MyGrid(npyscreen.GridColTitles):
@@ -137,6 +138,23 @@ class OutputBox(npyscreen.BoxTitle):
 
 class VerbOutputBox(npyscreen.BoxTitle):
     _contained_widget = npyscreen.MultiLineEdit
+
+
+class CommandForm(npyscreen.ActionPopup):
+
+    def create(self):
+        self.command_choice = self.add(npyscreen.TitleSelectOne, max_height=4, value=[0],
+                                       name="Select Command",
+                                       values=["Sort"])
+
+    def on_ok(self):
+        selected_command = self.command_choice.get_selected_objects()[0]
+
+        if selected_command == "Sort":
+            self.parentApp.getForm('MAIN').grid.sortby = self.parentApp.getForm('MAIN').grid.edit_cell[1]
+            self.parentApp.getForm('MAIN').grid.values.sort(key=lambda x: x[self.parentApp.getForm('MAIN').grid.sortby])
+
+        self.parentApp.switchFormPrevious()
 
 
 class MainForm(npyscreen.FormBaseNew):
@@ -269,6 +287,16 @@ class MainForm(npyscreen.FormBaseNew):
                 table = print_results2(hash2phone[self.get_mac_val_from_cell()]['phone_info'])
                 rez = "{}\n\n{}".format(hashinfo, table)
                 npyscreen.notify_confirm(rez, title="Phone number info", wrap=True, wide=True, editw=0)
+
+    def on_ok(self):
+        selected_row = self.gd.edit_cell[0]
+        self.parentApp.getForm('COMMAND').selected_row = selected_row
+        self.parentApp.switchForm('COMMAND')
+
+    def handle_input(self, key):
+        super(MainForm, self).handle_input(key)
+        if key == ord('\n'):
+            self.on_ok()
 
 
 def clear_zombies():
