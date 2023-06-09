@@ -24,6 +24,19 @@ from threading import Thread, Timer
 import bluetooth._bluetooth as bluez
 from utils.bluetooth_utils import (toggle_device, enable_le_scan, parse_le_advertising_events, disable_le_scan,
                                    raw_packet_to_str, start_le_advertising, stop_le_advertising)
+from dictonary import (
+    phone_states,
+    airpods_states,
+    devices_models,
+    proximity_dev_models,
+    proximity_colors,
+    homekit_category,
+    siri_dev,
+    magic_sw_wrist,
+    hotspot_net,
+    ble_packets_types,
+)
+
 
 help_desc = '''
 Apple bleee. Apple device sniffer
@@ -61,11 +74,11 @@ imessage_url = ''  # URL to iMessage sender (sorry, but we did some RE for that 
 iwdev = 'wlan0'
 apple_company_id = 'ff4c00'
 
-dev_id = 0  # the bluetooth device is hci0
+dev_id = 1  # the bluetooth device is hci0
 toggle_device(dev_id, True)
 
 sock = 0
-titles = ['Mac', 'State', 'Device', 'WI-FI', 'OS', 'Phone', 'Time', 'Notes']
+titles = ['Mac', 'RSSI', 'Device', 'Model', 'OS', 'Time', 'WI-FI', 'State']
 dev_sig = {'02010': 'MacBook', '02011': 'iPhone'}
 dev_types = ["iPad", "iPhone", "MacOS", "AirPods", "Powerbeats3", "BeatsX", "Beats Solo3"]
 phones = {}
@@ -80,324 +93,6 @@ dictOfss = {}
 proxies = {}
 verify = False
 
-# not sure about 1b, 13, 0a, 1a, 17
-# phone_states2 = {
-#                 '01':'Off',
-#                 '03':'Off',
-#                 '07':'Lock screen',
-#                 '09':'Off',
-#                 '0a':'Off',
-#                 '0b':'Home screen',
-#                 '0e':'Calling',
-#                 '11':'Home screen',
-#                 '13':'Off',
-#                 '17':'Lock screen',
-#                 '18':'Off',
-#                 '1a':'Off',
-#                 '1b':'Home screen',
-#                 '1c':'Home screen',
-#                 '47':'Lock screen',
-#                 '4b':'Home screen',
-#                 '4e':'Outgoing call',
-#                 '57':'Lock screen',
-#                 '5a':'Off',
-#                 '5b':'Home screen',
-#                 '5e':'Incoming call',
-#                 }
-phone_states = {
-    '01': 'Disabled',
-    '03': 'Idle',
-    '05': 'Music',
-    '07': 'Lock screen',
-    '09': 'Video',
-    '0a': 'Home screen',
-    '0b': 'Home screen',
-    '0d': 'Driving',
-    '0e': 'Incoming call',
-    '11': 'Home screen',
-    '13': 'Off',
-    '17': 'Lock screen',
-    '18': 'Off',
-    '1a': 'Off',
-    '1b': 'Home screen',
-    '1c': 'Home screen',
-    '23': 'Off',
-    '47': 'Lock screen',
-    '4b': 'Home screen',
-    '4e': 'Outgoing call',
-    '57': 'Lock screen',
-    '5a': 'Off',
-    '5b': 'Home screen',
-    '5e': 'Outgoing call',
-    '67': 'Lock screen',
-    '6b': 'Home screen',
-    '6e': 'Incoming call',
-}
-
-airpods_states = {
-    '00': 'Case:Closed',
-    '01': 'Case:All out',
-    '02': 'L:out',
-    '03': 'L:out',
-    '05': 'R:out',
-    '09': 'R:out',
-    '0b': 'LR:in',
-    '11': 'R:out',
-    '13': 'R:in',
-    '15': 'R:in case',
-    '20': 'L:out',
-    '21': 'Case:All out',
-    '22': 'Case:L out',
-    '23': 'R:out',
-    '29': 'L:out',
-    '2b': 'LR:in',
-    '31': 'Case:L out',
-    '33': 'Case:L out',
-    '50': 'Case:open',
-    '51': 'L:out',
-    '53': 'L:in',
-    '55': 'Case:open',
-    '70': 'Case:open',
-    '71': 'Case:R out',
-    '73': 'Case:R out',
-    '75': 'Case:open',
-}
-devices_models = {
-    "i386": "iPhone Simulator",
-    "x86_64": "iPhone Simulator",
-    "iPhone1,1": "iPhone",
-    "iPhone1,2": "iPhone 3G",
-    "iPhone2,1": "iPhone 3GS",
-    "iPhone3,1": "iPhone 4",
-    "iPhone3,2": "iPhone 4 GSM Rev A",
-    "iPhone3,3": "iPhone 4 CDMA",
-    "iPhone5,1": "iPhone 5 (GSM)",
-    "iPhone4,1": "iPhone 4S",
-    "iPhone5,2": "iPhone 5 (GSM+CDMA)",
-    "iPhone5,3": "iPhone 5C (GSM)",
-    "iPhone5,4": "iPhone 5C (Global)",
-    "iPhone6,1": "iPhone 5S (GSM)",
-    "iPhone6,2": "iPhone 5S (Global)",
-    "iPhone7,1": "iPhone 6 Plus",
-    "iPhone7,2": "iPhone 6",
-    "iPhone8,1": "iPhone 6s",
-    "iPhone8,2": "iPhone 6s Plus",
-    "iPhone8,3": "iPhone SE (GSM+CDMA)",
-    "iPhone8,4": "iPhone SE (GSM)",
-    "iPhone9,1": "iPhone 7",
-    "iPhone9,2": "iPhone 7 Plus",
-    "iPhone9,3": "iPhone 7",
-    "iPhone9,4": "iPhone 7 Plus",
-    "iPhone10,1": "iPhone 8",
-    "iPhone10,2": "iPhone 8 Plus",
-    "iPhone10,3": "iPhone X Global",
-    "iPhone10,4": "iPhone 8",
-    "iPhone10,5": "iPhone 8 Plus",
-    "iPhone10,6": "iPhone X GSM",
-    "iPhone11,2": "iPhone XS",
-    "iPhone11,4": "iPhone XS Max",
-    "iPhone11,6": "iPhone XS Max Global",
-    "iPhone11,8": "iPhone XR",
-    "MacBookPro15,1": "MacBook Pro 15, 2019",
-    "MacBookPro15,2": "MacBook Pro 13, 2019",
-    "MacBookPro15,1": "MacBook Pro 15, 2018",
-    "MacBookPro15,2": "MacBook Pro 13, 2018",
-    "MacBookPro14,3": "MacBook Pro 15, 2017",
-    "MacBookPro14,2": "MacBook Pro 13, 2017",
-    "MacBookPro14,1": "MacBook Pro 13, 2017",
-    "MacBookPro13,3": "MacBook Pro 15, 2016",
-    "MacBookPro13,2": "MacBook Pro 13, 2016",
-    "MacBookPro13,1": "MacBook Pro 13, 2016",
-    "MacBookPro11,4": "MacBook Pro 15, mid 2015",
-    "MacBookPro11,5": "MacBook Pro 15, mid 2015",
-    "MacBookPro12,1": "MacBook Pro 13, ear 2015",
-    "MacBookPro11,2": "MacBook Pro 15, mid 2014",
-    "MacBookPro11,3": "MacBook Pro 15, mid 2014",
-    "MacBookPro11,1": "MacBook Pro 13, mid 2014",
-    "MacBookPro11,2": "MacBook Pro 15, end 2013",
-    "MacBookPro11,3": "MacBook Pro 15, end 2013",
-    "MacBookPro10,1": "MacBook Pro 15, ear 2013",
-    "MacBookPro11,1": "MacBook Pro 13, end 2013",
-    "MacBookPro10,2": "MacBook Pro 13, ear 2013",
-    "MacBookPro10,1": "MacBook Pro 15, mid 2012",
-    "MacBookPro9,1": "MacBook Pro 15, mid 2012",
-    "MacBookPro10,2": "MacBook Pro 15, mid 2012",
-    "MacBookPro9,2": "MacBook Pro 15, mid 2012",
-    "MacBookPro8,3": "MacBook Pro 17, end 2011",
-    "MacBookPro8,3": "MacBook Pro 17, ear 2011",
-    "MacBookPro8,2": "MacBook Pro 15, end 2011",
-    "MacBookPro8,2": "MacBook Pro 15, ear 2011",
-    "MacBookPro8,1": "MacBook Pro 13, end 2011",
-    "MacBookPro8,1": "MacBook Pro 13, ear 2011",
-    "MacBookPro6,1": "MacBook Pro 17, mid 2010",
-    "MacBookPro6,2": "MacBook Pro 15, mid 2010",
-    "MacBookPro7,1": "MacBook Pro 13, mid 2010",
-    "MacBookPro5,2": "MacBook Pro 17, mid 2009",
-    "MacBookPro5,2": "MacBook Pro 17, ear 2009",
-    "MacBookPro5,3": "MacBook Pro 15, mid 2009",
-    "MacBookPro5,3": "MacBook Pro 15, mid 2009",
-    "MacBookPro5,5": "MacBook Pro 13, mid 2009",
-    "MacBookPro5,1": "MacBook Pro 15, end 2008",
-    "MacBookPro4,1": "MacBook Pro 17, ear 2008",
-    "MacBookPro4,1": "MacBook Pro 15, ear 2008",
-    "iPod1,1": "1st Gen iPod",
-    "iPod2,1": "2nd Gen iPod",
-    "iPod3,1": "3rd Gen iPod",
-    "iPod4,1": "4th Gen iPod",
-    "iPod5,1": "5th Gen iPod",
-    "iPod7,1": "6th Gen iPod",
-    "iPad1,1": "iPad",
-    "iPad1,2": "iPad 3G",
-    "iPad2,1": "2nd Gen iPad",
-    "iPad2,2": "2nd Gen iPad GSM",
-    "iPad2,3": "2nd Gen iPad CDMA",
-    "iPad2,4": "2nd Gen iPad New Revision",
-    "iPad3,1": "3rd Gen iPad",
-    "iPad3,2": "3rd Gen iPad CDMA",
-    "iPad3,3": "3rd Gen iPad GSM",
-    "iPad2,5": "iPad mini",
-    "iPad2,6": "iPad mini GSM+LTE",
-    "iPad2,7": "iPad mini CDMA+LTE",
-    "iPad3,4": "4th Gen iPad",
-    "iPad3,5": "4th Gen iPad GSM+LTE",
-    "iPad3,6": "4th Gen iPad CDMA+LTE",
-    "iPad4,1": "iPad Air (WiFi)",
-    "iPad4,2": "iPad Air (GSM+CDMA)",
-    "iPad4,3": "1st Gen iPad Air (China)",
-    "iPad4,4": "iPad mini Retina (WiFi)",
-    "iPad4,5": "iPad mini Retina (GSM+CDMA)",
-    "iPad4,6": "iPad mini Retina (China)",
-    "iPad4,7": "iPad mini 3 (WiFi)",
-    "iPad4,8": "iPad mini 3 (GSM+CDMA)",
-    "iPad4,9": "iPad Mini 3 (China)",
-    "iPad5,1": "iPad mini 4 (WiFi)",
-    "iPad5,2": "4th Gen iPad mini (WiFi+Cellular)",
-    "iPad5,3": "iPad Air 2 (WiFi)",
-    "iPad5,4": "iPad Air 2 (Cellular)",
-    "iPad6,3": "iPad Pro (9.7 inch, WiFi)",
-    "iPad6,4": "iPad Pro (9.7 inch, WiFi+LTE)",
-    "iPad6,7": "iPad Pro (12.9 inch, WiFi)",
-    "iPad6,8": "iPad Pro (12.9 inch, WiFi+LTE)",
-    "iPad6,11": "iPad (2017)",
-    "iPad6,12": "iPad (2017)",
-    "iPad7,1": "iPad Pro 2nd Gen (WiFi)",
-    "iPad7,2": "iPad Pro 2nd Gen (WiFi+Cellular)",
-    "iPad7,3": "iPad Pro 10.5-inch",
-    "iPad7,4": "iPad Pro 10.5-inch",
-    "iPad7,5": "iPad 6th Gen (WiFi)",
-    "iPad7,6": "iPad 6th Gen (WiFi+Cellular)",
-    "iPad8,1": "iPad Pro 3rd Gen (11 inch, WiFi)",
-    "iPad8,2": "iPad Pro 3rd Gen (11 inch, 1TB, WiFi)",
-    "iPad8,3": "iPad Pro 3rd Gen (11 inch, WiFi+Cellular)",
-    "iPad8,4": "iPad Pro 3rd Gen (11 inch, 1TB, WiFi+Cellular)",
-    "iPad8,5": "iPad Pro 3rd Gen (12.9 inch, WiFi)",
-    "iPad8,6": "iPad Pro 3rd Gen (12.9 inch, 1TB, WiFi)",
-    "iPad8,7": "iPad Pro 3rd Gen (12.9 inch, WiFi+Cellular)",
-    "iPad8,8": "iPad Pro 3rd Gen (12.9 inch, 1TB, WiFi+Cellular)",
-    "Watch1,1": "Apple Watch 38mm case",
-    "Watch1,2": "Apple Watch 38mm case",
-    "Watch2,6": "Apple Watch Series 1 38mm case",
-    "Watch2,7": "Apple Watch Series 1 42mm case",
-    "Watch2,3": "Apple Watch Series 2 38mm case",
-    "Watch2,4": "Apple Watch Series 2 42mm case",
-    "Watch3,1": "Apple Watch Series 3 38mm case (GPS+Cellular)",
-    "Watch3,2": "Apple Watch Series 3 42mm case (GPS+Cellular)",
-    "Watch3,3": "Apple Watch Series 3 38mm case (GPS)",
-    "Watch3,4": "Apple Watch Series 3 42mm case (GPS)",
-    "Watch4,1": "Apple Watch Series 4 40mm case (GPS)",
-    "Watch4,2": "Apple Watch Series 4 44mm case (GPS)",
-    "Watch4,3": "Apple Watch Series 4 40mm case (GPS+Cellular)",
-    "Watch4,4": "Apple Watch Series 4 44mm case (GPS+Cellular)",
-}
-
-proximity_dev_models = {
-    '0220': 'AirPods',
-    '0320': 'Powerbeats3',
-    '0520': 'BeatsX',
-    '0620': 'Beats Solo3'
-}
-
-proximity_colors = {
-    '00': 'White',
-    '01': 'Black',
-    '02': 'Red',
-    '03': 'Blue',
-    '04': 'Pink',
-    '05': 'Gray',
-    '06': 'Silver',
-    '07': 'Gold',
-    '08': 'Rose Gold',
-    '09': 'Space Gray',
-    '0a': 'Dark Blue',
-    '0b': 'Light Blue',
-    '0c': 'Yellow',
-}
-
-homekit_category = {
-    '0000': 'Unknown',
-    '0100': 'Other',
-    '0200': 'Bridge',
-    '0300': 'Fan',
-    '0400': 'Garage Door Opener',
-    '0500': 'Lightbulb',
-    '0600': 'Door Lock',
-    '0700': 'Outlet',
-    '0800': 'Switch',
-    '0900': 'Thermostat',
-    '0a00': 'Sensor',
-    '0b00': 'Security System',
-    '0c00': 'Door',
-    '0d00': 'Window',
-    '0e00': 'Window Covering',
-    '0f00': 'Programmable Switch',
-    '1000': 'Range Extender',
-    '1100': 'IP Camera',
-    '1200': 'Video Doorbell',
-    '1300': 'Air Purifier',
-    '1400': 'Heater',
-    '1500': 'Air Conditioner',
-    '1600': 'Humidifier',
-    '1700': 'Dehumidifier',
-    '1c00': 'Sprinklers',
-    '1d00': 'Faucets',
-    '1e00': 'Shower Systems',
-}
-
-siri_dev = {'0002': 'iPhone',
-            '0003': 'iPad',
-            '0009': 'MacBook',
-            '000a': 'Watch',
-            }
-
-magic_sw_wrist = {
-    '03': 'Not on wrist',
-    '1f': 'Wrist detection disabled',
-    '3f': 'On wrist',
-}
-
-hotspot_net = {
-    '01': '1xRTT',
-    '02': 'GPRS',
-    '03': 'EDGE',
-    '04': '3G (EV-DO)',
-    '05': '3G',
-    '06': '4G',
-    '07': 'LTE',
-}
-ble_packets_types = {
-    'airprint': '03',
-    'airdrop': '05',
-    'homekit': '06',
-    'airpods': '07',
-    'siri': '08',
-    'airplay': '09',
-    'nearby': '10',
-    'watch_c': '0b',
-    'handoff': '0c',
-    'wifi_set': '0d',
-    'hotspot': '0e',
-    'wifi_join': '0f',
-}
 
 if args.check_hash:
     if not (hash2phone_url or path.isfile(hash2phone_db)):
@@ -454,11 +149,14 @@ class MainForm(npyscreen.FormBaseNew):
         if args.airdrop:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20, max_height=y // 2)
             self.OutputBox = self.add(OutputBox, editable=False)
+            self.gd.select_whole_line = True
         elif args.verb:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20, max_height=y // 2)
             self.VerbOutputBox = self.add(VerbOutputBox, editable=False, name=logFile)
+            self.gd.select_whole_line = True
         else:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20)
+            self.gd.select_whole_line = True
         self.gd.values = []
         self.gd.add_handlers({curses.ascii.NL: self.upd_cell})
 
@@ -494,7 +192,7 @@ class MainForm(npyscreen.FormBaseNew):
         if dev_name:
             d_n_hex = dev_name.split(b"value:")[1].replace(b" ", b"").replace(b"\n", b"")
             d_n_str = bytes.fromhex(d_n_hex.decode("utf-8")).decode('utf-8')
-            return_value = devices_models[d_n_str]
+            return_value = devices_models.get(d_n_str, d_n_str)
         else:
             return_value = ''
         init_bluez()
@@ -505,12 +203,11 @@ class MainForm(npyscreen.FormBaseNew):
 
     def get_all_dev_names(self):
         global resolved_devs
-        for phone in phones:
-            # print (phones[phone])
-            if (phones[phone]['device'] == 'MacBook' or phones[phone][
-                'device'] == 'iPhone') and phone not in resolved_devs:
-                # print(f"checking {phone}")
-                self.get_dev_name(phone)
+        phone_keys = list(phones.keys())
+        for phone_key in phone_keys:
+            phone = phones[phone_key]
+            if (phone['device'] == 'MacBook' or phone['device'] == 'iPhone') and phone_key not in resolved_devs:
+                self.get_dev_name(phone_key)
 
     def get_mac_val_from_cell(self):
         return self.gd.values[self.gd.edit_cell[0]][0]
@@ -593,8 +290,19 @@ def print_results():
     clear_zombies()
     row = []
     for phone in phones:
-        row.append([phone, phones[phone]['state'], phones[phone]['device'], phones[phone]['wifi'], phones[phone]['os'],
-                    phones[phone]['phone'], phones[phone]['time'], phones[phone]['notes']])
+        row.append(
+            [
+                phone,
+                phones[phone]['rssi'],
+                phones[phone]['device'],
+                phones[phone]['phone'],
+                phones[phone]['os'],
+                phones[phone]['time'],
+                phones[phone]['wifi'],
+                phones[phone]['state'],
+            ]
+        )
+
     return row
 
 
@@ -669,7 +377,7 @@ def put_verb_message(msg, mac):
             verb_messages.append(f"{mac} {msg}")
 
 
-def parse_nearby(mac, header, data):
+def parse_nearby(mac, header, data, rssi):
     # 0        1        2                                 5
     # +--------+--------+--------------------------------+
     # |        |        |                                |
@@ -702,16 +410,17 @@ def parse_nearby(mac, header, data):
         phones[mac]['wifi'] = wifi_state
         phones[mac]['os'] = os_state
         phones[mac]['time'] = int(time.time())
+        phones[mac]['rssi'] = rssi
         if mac not in resolved_devs:
             phones[mac]['device'] = dev_val
     else:
-        phones[mac] = {'state': unkn, 'device': unkn, 'wifi': unkn, 'os': unkn, 'phone': '', 'time': int(time.time()),
-                       'notes': ''}
+        phones[mac] = {'state': unkn, 'device': unkn, 'wifi': unkn, 'os': unkn, 'phone': '', 'time': int(time.time())}
         phones[mac]['device'] = dev_val
+        phones[mac]['rssi'] = rssi
         resolved_macs.append(mac)
 
 
-def parse_nandoff(mac, data):
+def parse_nandoff(mac, data, rssi):
     # 0       1          3       4                                   14
     # +-------+----------+-------+-----------------------------------+
     # |       |          |       |                                   |
@@ -724,17 +433,16 @@ def parse_nandoff(mac, data):
                'encryptedData': 10}
     result = parse_struct(data, handoff)
     put_verb_message("Handoff:{}".format(json.dumps(result)), mac)
-    notes = f"Clbrd:True" if result['clipboard'] == '08' else ''
     if mac in resolved_macs:
         phones[mac]['time'] = int(time.time())
-        phones[mac]['notes'] = notes
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': 'Idle', 'device': 'AppleWatch', 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': notes}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_watch_c(mac, data):
+def parse_watch_c(mac, data, rssi):
     # 0          2       3
     # +----------+-------+
     # |          |       |
@@ -746,18 +454,17 @@ def parse_watch_c(mac, data):
                     }
     result = parse_struct(data, magic_switch)
     put_verb_message("MagicSwitch:{}".format(json.dumps(result)), mac)
-    notes = f"{magic_sw_wrist[result['wrist']]}"
     if mac in resolved_macs:
         phones[mac]['state'] = 'MagicSwitch'
         phones[mac]['time'] = int(time.time())
-        phones[mac]['notes'] = notes
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': 'MagicSwitch', 'device': 'AppleWatch', 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': notes}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_wifi_set(mac, data):
+def parse_wifi_set(mac, data, rssi):
     # 0                                         4
     # +-----------------------------------------+
     # |                                         |
@@ -770,12 +477,13 @@ def parse_wifi_set(mac, data):
     unkn = '<unknown>'
     if mac in resolved_macs or mac in resolved_devs:
         phones[mac]['state'] = 'WiFi screen'
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': unkn, 'device': unkn, 'wifi': unkn, 'os': unkn, 'phone': '', 'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_hotspot(mac, data):
+def parse_hotspot(mac, data, rssi):
     # 0       1       2           4       5       6
     # +-------+-------+-----------+-------+-------+
     # |       |       |           | Net   |  Sig  |
@@ -791,17 +499,16 @@ def parse_hotspot(mac, data):
                }
     result = parse_struct(data, hotspot)
     put_verb_message("Hotspot:{}".format(json.dumps(result)), mac)
-    notes = hotspot_net[result['cell_srv']]
     if mac in resolved_macs or mac in resolved_devs:
         phones[mac]['state'] = '{}.Bat:{}%'.format(phones[mac]['state'], int(result['battery'], 16))
-        phones[mac]['notes'] = notes
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': 'MagicSwitch', 'device': 'AppleWatch', 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': notes}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_wifi_j(mac, data):
+def parse_wifi_j(mac, data, rssi):
     # 0        1       2                        5                         8                       12                     15                     18
     # +--------+-------+------------------------+-------------------------+-----------------------+----------------------+----------------------+
     # |        |       |                        |                         |                       |                      |                      |
@@ -818,7 +525,6 @@ def parse_wifi_j(mac, data):
               'ssid_hash': 3}
     result = parse_struct(data, wifi_j)
     put_verb_message("WiFi join:{}".format(json.dumps(result)), mac)
-    notes = f"phone:{result['phone_hash']}"
     global phone_number_info
     unkn = '<unknown>'
     if mac not in victims and result["type"] == "08":
@@ -845,13 +551,13 @@ def parse_wifi_j(mac, data):
         if resolved_macs.count(mac):
             phones[mac]['time'] = int(time.time())
             phones[mac]['phone'] = 'X'
-            phones[mac]['notes'] = notes
+            phones[mac]['rssi'] = rssi
             hash2phone[mac] = {'ph_hash': result['phone_hash'], 'email_hash': result['email_hash'],
                                'appleID_hash': result['appleID_hash'], 'SSID_hash': result['ssid_hash'],
                                'phone_info': phone_number_info}
         else:
             phones[mac] = {'state': unkn, 'device': unkn, 'wifi': unkn, 'os': unkn, 'phone': '',
-                           'time': int(time.time()), 'notes': notes}
+                           'time': int(time.time())}
             resolved_macs.append(mac)
             phones[mac]['time'] = int(time.time())
             phones[mac]['phone'] = 'X'
@@ -862,7 +568,7 @@ def parse_wifi_j(mac, data):
         phones[mac]['time'] = int(time.time())
 
 
-def parse_airpods(mac, data):
+def parse_airpods(mac, data, rssi):
     # 0       1                3        4       5       6       7       8       9                                 25
     # +-------+----------------+--------+-------+-------+-------+-------+-------+---------------------------------+
     # |       |      Device    |        |       |       | Lid   |  Dev  |       |                                 |
@@ -888,7 +594,6 @@ def parse_airpods(mac, data):
     bat_right = int(bat1[4:], 2) * 10
     color = '{}'.format(proximity_colors[result['color']])
     bat_level = 'L:{}% R:{}%'.format(bat_left, bat_right)
-    notes = f'{bat_level} {color}'
     if result['utp'] in airpods_states.keys():
         state = airpods_states[result['utp']]
     else:
@@ -898,15 +603,15 @@ def parse_airpods(mac, data):
     if mac in resolved_macs:
         phones[mac]['state'] = state
         phones[mac]['time'] = int(time.time())
-        phones[mac]['notes'] = notes
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': state, 'device': proximity_dev_models[result['model']], 'wifi': '', 'os': '',
                        'phone': '',
-                       'time': int(time.time()), 'notes': notes}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_airdrop_r(mac, data):
+def parse_airdrop_r(mac, data, rssi):
     # 0                                         8        9                11                    13                  15                 17       18
     # +-----------------------------------------+--------+----------------+---------------------+-------------------+------------------+--------+
     # |                                         |        |                |                     |                   |                  |        |
@@ -922,18 +627,17 @@ def parse_airdrop_r(mac, data):
                  'zero': 1}
     result = parse_struct(data, airdrop_r)
     put_verb_message("AirDrop:{}".format(json.dumps(result)), mac)
-    notes = f"phone:{result['phone_hash']}"
     if mac in resolved_macs:
         phones[mac]['state'] = 'AirDrop'
         phones[mac]['time'] = int(time.time())
-        phones[mac]['notes'] = notes
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': 'AirDrop', 'device': '', 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': notes}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_airprint(mac, data):
+def parse_airprint(mac, data, rssi):
     # 0       1       2       3           5                                         21       22
     # +-------+-------+-------+-----------+-----------------------------------------+---------+
     # |  Addr | Res   | Sec   |   QID or  |                                         |         |
@@ -951,9 +655,10 @@ def parse_airprint(mac, data):
     if mac in resolved_macs:
         phones[mac]['state'] = 'AirPrint'
         phones[mac]['time'] = int(time.time())
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': 'AirPrint', 'device': '', 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': ''}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
@@ -975,11 +680,11 @@ def parse_airplay(mac, data):
         phones[mac]['time'] = int(time.time())
     else:
         phones[mac] = {'state': 'AirPlay', 'device': '', 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': ''}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_homekit(mac, data):
+def parse_homekit(mac, data, rssi):
     # 0       1                7            9             11      12      13
     # +------------------------+--------------------------+-------+-------+
     # | Status|                |            |Global State | Conf  | Comp  |
@@ -995,18 +700,17 @@ def parse_homekit(mac, data):
                }
     result = parse_struct(data, homekit)
     put_verb_message("Homekit:{}".format(json.dumps(result)), mac)
-    notes = homekit_category[result['category']]
     if mac in resolved_macs:
         phones[mac]['state'] = 'Homekit'
         phones[mac]['time'] = int(time.time())
-        phones[mac]['notes'] = notes
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': 'Homekit', 'device': '', 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': notes}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def parse_siri(mac, data):
+def parse_siri(mac, data, rssi):
     # 0            2        3        4            6        7
     # +------------+--------+--------+------------+--------+
     # |            |        |        |            | Random |
@@ -1025,41 +729,42 @@ def parse_siri(mac, data):
         phones[mac]['state'] = 'Siri'
         phones[mac]['time'] = int(time.time())
         phones[mac]['device'] = siri_dev[result['devClass']]
+        phones[mac]['rssi'] = rssi
     else:
         phones[mac] = {'state': 'Siri', 'device': siri_dev[result['devClass']], 'wifi': '', 'os': '', 'phone': '',
-                       'time': int(time.time()), 'notes': ''}
+                       'time': int(time.time())}
         resolved_macs.append(mac)
 
 
-def read_packet(mac, data_str):
+def read_packet(mac, data_str, rssi):
     if apple_company_id in data_str:
         header = data_str[:data_str.find(apple_company_id)]
         data = data_str[data_str.find(apple_company_id) + len(apple_company_id):]
         packet = parse_ble_packet(data)
         if ble_packets_types['nearby'] in packet.keys():
-            parse_nearby(mac, header, packet[ble_packets_types['nearby']])
+            parse_nearby(mac, header, packet[ble_packets_types['nearby']], rssi)
         if ble_packets_types['handoff'] in packet.keys():
-            parse_nandoff(mac, packet[ble_packets_types['handoff']])
+            parse_nandoff(mac, packet[ble_packets_types['handoff']], rssi)
         if ble_packets_types['watch_c'] in packet.keys():
-            parse_watch_c(mac, packet[ble_packets_types['watch_c']])
+            parse_watch_c(mac, packet[ble_packets_types['watch_c']], rssi)
         if ble_packets_types['wifi_set'] in packet.keys():
-            parse_wifi_set(mac, packet[ble_packets_types['wifi_set']])
+            parse_wifi_set(mac, packet[ble_packets_types['wifi_set']], rssi)
         if ble_packets_types['hotspot'] in packet.keys():
-            parse_hotspot(mac, packet[ble_packets_types['hotspot']])
+            parse_hotspot(mac, packet[ble_packets_types['hotspot']], rssi)
         if ble_packets_types['wifi_join'] in packet.keys():
-            parse_wifi_j(mac, packet[ble_packets_types['wifi_join']])
+            parse_wifi_j(mac, packet[ble_packets_types['wifi_join']], rssi)
         if ble_packets_types['airpods'] in packet.keys():
-            parse_airpods(mac, packet[ble_packets_types['airpods']])
+            parse_airpods(mac, packet[ble_packets_types['airpods']], rssi)
         if ble_packets_types['airdrop'] in packet.keys():
-            parse_airdrop_r(mac, packet[ble_packets_types['airdrop']])
+            parse_airdrop_r(mac, packet[ble_packets_types['airdrop']], rssi)
         if ble_packets_types['airprint'] in packet.keys():
-            parse_airprint(mac, packet[ble_packets_types['airprint']])
+            parse_airprint(mac, packet[ble_packets_types['airprint']], rssi)
         if ble_packets_types['homekit'] in packet.keys():
-            parse_homekit(mac, packet[ble_packets_types['homekit']])
+            parse_homekit(mac, packet[ble_packets_types['homekit']], rssi)
         if ble_packets_types['siri'] in packet.keys():
-            parse_siri(mac, packet[ble_packets_types['siri']])
+            parse_siri(mac, packet[ble_packets_types['siri']], rssi)
         if ble_packets_types['airplay'] in packet.keys():
-            parse_siri(mac, packet[ble_packets_types['airplay']])
+            parse_siri(mac, packet[ble_packets_types['airplay']], rssi)
 
 
 def get_phone_db(hashp):
@@ -1155,7 +860,7 @@ def get_dict_val(dict, key):
 
 def le_advertise_packet_handler(mac, adv_type, data, rssi):
     data_str = raw_packet_to_str(data)
-    read_packet(mac, data_str)
+    read_packet(mac, data_str, rssi)
 
 
 def init_bluez():
