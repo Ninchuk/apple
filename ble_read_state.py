@@ -244,14 +244,11 @@ class MainForm(npyscreen.FormBaseNew):
 
     def get_all_dev_names(self):
         global resolved_devs
-        import copy
-        current_phones = copy.deepcopy(phones)
-        for phone in current_phones:
-            # print (phones[phone])
-            if (phones[phone]['device'] == 'MacBook' or phones[phone][
-                'device'] == 'iPhone') and phone not in resolved_devs:
-                # print(f"checking {phone}")
-                self.get_dev_name(phone)
+        phone_keys = list(phones.keys())
+        for phone_key in phone_keys:
+            phone = phones[phone_key]
+        if (phone['device'] == 'MacBook' or phone['device'] == 'iPhone') and phone_key not in resolved_devs:
+            self.get_dev_name(phone_key)
 
     def get_mac_val_from_cell(self):
         return self.gd.values[self.gd.edit_cell[0]][0]
