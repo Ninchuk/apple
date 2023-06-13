@@ -74,7 +74,7 @@ imessage_url = ''  # URL to iMessage sender (sorry, but we did some RE for that 
 iwdev = 'wlan0'
 apple_company_id = 'ff4c00'
 
-dev_id = 1  # the bluetooth device is hci0
+dev_id = 0  # the bluetooth device is hci0
 toggle_device(dev_id, True)
 
 sock = 0
@@ -116,7 +116,66 @@ if args.message:
 class App(npyscreen.StandardApp):
     def onStart(self):
         self.addForm("MAIN", MainForm, name="Apple devices scanner")
-        self.addForm("COMMAND", CommandForm, name="Command Selection")
+        commands = {"command_name1": (0, func1), "command_name2": (1, func2)}
+        self.addForm("COMMAND", MenuForm, name="Command Selection", commands=commands)
+        self.addForm("MENU", ColumnMenuForm, name="List column")
+
+
+class MenuForm(npyscreen.ActionPopup):
+    def __init__(self, *args, commands=None, **kwargs):
+        self.__commands = commands
+        super().__init__(args, kwargs)
+
+    def create(self):
+        commands = list(self.__commands.keys())
+        commands.append('sort')
+        self.command_choice = self.add(
+            npyscreen.TitleSelectOne,
+            max_height=4,
+            value=[0],
+            name="Select Command",
+            values=commands,
+        )
+
+    def on_ok(self):
+        selected_command = self.command_choice.get_selected_objects()[0]
+
+        if selected_command == "sort":
+            self.parentApp.switchForm('MENU')
+        elif selected_command in self.__commands:
+            command = self.__commands[selected_command]
+            column_index, func = command
+            table = self.parentApp.getForm('MAIN')
+            row_index = table.gd.edit_cell[0]
+            func(row_index, column_index, table)
+
+        self.parentApp.switchFormPrevious()
+
+    def on_cancel(self):
+        self.parentApp.switchFormPrevious()
+
+
+class ColumnMenuForm(npyscreen.ActionPopup):
+    def __int__(self):
+        pass
+
+    def create(self):
+        self.column_choice = self.add(npyscreen.TitleSelectOne, max_height=5, value=[0],
+                                      name="List column", values=self.parentApp.getForm('MAIN').gd.col_titles)
+
+    def on_ok(self):
+        selected_column_index = self.column_choice.value[0]
+
+        self.parentApp.getForm('MAIN').gd.sortby = selected_column_index
+        self.parentApp.getForm('MAIN').gd.values.sort(key=lambda x: x[selected_column_index])
+
+        self.parentApp.switchFormPrevious('MAIN')
+        self.parentApp.getForm('MAIN').display()
+
+        self.parentApp.switchFormPrevious()
+
+    def on_cancel(self):
+        self.parentApp.switchFormPrevious()
 
 
 class MyGrid(npyscreen.GridColTitles):
@@ -140,23 +199,6 @@ class VerbOutputBox(npyscreen.BoxTitle):
     _contained_widget = npyscreen.MultiLineEdit
 
 
-class CommandForm(npyscreen.ActionPopup):
-
-    def create(self):
-        self.command_choice = self.add(npyscreen.TitleSelectOne, max_height=4, value=[0],
-                                       name="Select Command",
-                                       values=["Sort"])
-
-    def on_ok(self):
-        selected_command = self.command_choice.get_selected_objects()[0]
-
-        if selected_command == "Sort":
-            self.parentApp.getForm('MAIN').grid.sortby = self.parentApp.getForm('MAIN').grid.edit_cell[1]
-            self.parentApp.getForm('MAIN').grid.values.sort(key=lambda x: x[self.parentApp.getForm('MAIN').grid.sortby])
-
-        self.parentApp.switchFormPrevious()
-
-
 class MainForm(npyscreen.FormBaseNew):
     def create(self):
         new_handlers = {
@@ -167,13 +209,16 @@ class MainForm(npyscreen.FormBaseNew):
         if args.airdrop:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20, max_height=y // 2)
             self.OutputBox = self.add(OutputBox, editable=False)
+            self.gd.select_whole_line = True
         elif args.verb:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20, max_height=y // 2)
             self.VerbOutputBox = self.add(VerbOutputBox, editable=False, name=logFile)
+            self.gd.select_whole_line = True
         else:
             self.gd = self.add(MyGrid, col_titles=titles, column_width=20)
+            self.gd.select_whole_line = True
         self.gd.values = []
-        self.gd.add_handlers({curses.ascii.NL: self.upd_cell})
+        self.gd.add_handlers({curses.ascii.DEL: self.upd_cell})
 
     def while_waiting(self):
         self.gd.values = print_results()
@@ -192,37 +237,21 @@ class MainForm(npyscreen.FormBaseNew):
         sys.exit()
 
     def get_dev_name(self, mac_addr):
-        global resolved_devs
-        # self.get_all_dev_names()
-        dev_name = ''
-        kill = lambda process: process.kill()
-        cmd = ['gatttool', '-t', 'random', '--char-read', '--uuid=0x2a24', '-b', mac_addr]
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        timer = Timer(3, kill, [proc])
-        try:
-            timer.start()
-            dev_name, stderr = proc.communicate()
-        finally:
-            timer.cancel()
-        if dev_name:
-            d_n_hex = dev_name.split(b"value:")[1].replace(b" ", b"").replace(b"\n", b"")
-            d_n_str = bytes.fromhex(d_n_hex.decode("utf-8")).decode('utf-8')
-            return_value = devices_models.get(d_n_str, d_n_str)
-        else:
-            return_value = ''
-        init_bluez()
-        resolved_devs.append(mac_addr)
+        return_value = get_device_name(mac_addr)
         if return_value:
             # resolved_devs.append(mac_addr)
             self.set_device_val_for_mac(mac_addr, return_value)
 
     def get_all_dev_names(self):
         global resolved_devs
-        phone_keys = list(phones.keys())
-        for phone_key in phone_keys:
-            phone = phones[phone_key]
-            if (phone['device'] == 'MacBook' or phone['device'] == 'iPhone') and phone_key not in resolved_devs:
-                self.get_dev_name(phone_key)
+        import copy
+        current_phones = copy.deepcopy(phones)
+        for phone in current_phones:
+            # print (phones[phone])
+            if (phones[phone]['device'] == 'MacBook' or phones[phone][
+                'device'] == 'iPhone') and phone not in resolved_devs:
+                # print(f"checking {phone}")
+                self.get_dev_name(phone)
 
     def get_mac_val_from_cell(self):
         return self.gd.values[self.gd.edit_cell[0]][0]
@@ -285,15 +314,16 @@ class MainForm(npyscreen.FormBaseNew):
                 rez = "{}\n\n{}".format(hashinfo, table)
                 npyscreen.notify_confirm(rez, title="Phone number info", wrap=True, wide=True, editw=0)
 
-    def on_ok(self):
-        selected_row = self.gd.edit_cell[0]
-        self.parentApp.getForm('COMMAND').selected_row = selected_row
-        self.parentApp.switchForm('COMMAND')
-
     def handle_input(self, key):
         super(MainForm, self).handle_input(key)
         if key == ord('\n'):
-            self.on_ok()
+            self.show_menu()
+
+    def show_menu(self):
+        self.parentApp.switchForm('COMMAND')
+
+    def update(self, row_index, column_index, value):
+        self.gd.values[row_index][column_index] = value
 
 
 def clear_zombies():
@@ -1010,6 +1040,46 @@ def print_results3(data):
     for dev in u_data:
         x.add_row([dev['name'], dev['host'], dev['os'], dev['discoverable'], dev['address']])
     return x.get_string()
+
+
+def func1(row_index, column_index, table):
+    new_value = 'test'
+    table.update(row_index, column_index, new_value)
+
+
+def func2(row_index, column_index, table):
+    new_value = 'test2'
+    table.update(row_index, column_index, new_value)
+
+
+def get_device_name(mac_addr):
+    global resolved_devs
+    dev_name = ''
+    kill = lambda process: process.kill()
+    cmd = ['gatttool', '-t', 'random', '--char-read', '--uuid=0x2a24', '-b', mac_addr]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    timer = Timer(3, kill, [proc])
+    try:
+        timer.start()
+        dev_name, stderr = proc.communicate()
+    finally:
+        timer.cancel()
+    if dev_name:
+        d_n_hex = dev_name.split(b"value:")[1].replace(b" ", b"").replace(b"\n", b"")
+        d_n_str = bytes.fromhex(d_n_hex.decode("utf-8")).decode('utf-8')
+        return_value = devices_models.get(d_n_str, d_n_str)
+    else:
+        return_value = ''
+    init_bluez()
+    resolved_devs.append(mac_addr)
+    return return_value
+
+
+def func(mac_addr):
+    global phones
+    dev_value = get_device_name(mac_addr)
+    if dev_value:
+        phones['mac']['device'] = dev_value
 
 
 if args.ssid:
